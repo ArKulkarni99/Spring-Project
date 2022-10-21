@@ -1,9 +1,11 @@
 package com.aakash.employee.controller;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
 import java.io.ByteArrayInputStream;
+import java.net.URI;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,16 +13,20 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.aakash.employee.entity.Employee;
 import com.aakash.employee.exception.DataNotFoundException;
+import com.aakash.employee.repo.EmployeeRepository;
 import com.aakash.employee.services.EmployeeService;
 import com.aakash.employee.util.GeneratePdfReport;
 
@@ -31,52 +37,71 @@ public class EmployeeController {
 	@Autowired
 	private EmployeeService service;
 	
+	
 	@GetMapping("/id/{id}")
-	public Employee getEmpById(@PathVariable Integer id) {
+	public ResponseEntity<Employee> getEmpById(@PathVariable Integer id) {
 		Employee employee = service.getEmpById(id);
 		if(employee !=null) {
-			return employee;
+			return ResponseEntity.ok(employee);
 		}else {
 			throw new DataNotFoundException("Employee with ID: "+id+" Not Found");
 		}
 	}
 	
 	@GetMapping("/getAll")
-	public List<Employee> getAllEmp(){
-		return service.getAllEmp();
+	public ResponseEntity<List<Employee>> getAllEmp(){
+		 List<Employee> emp = service.getAllEmp();
+		 return ResponseEntity.ok().body(emp);
 	}
 	
 	
 	@PostMapping("/save")
-	public String saveEmp(@RequestBody Employee emp) {
+	public ResponseEntity<Employee> saveEmp(@RequestBody Employee emp) {
+		URI location = null;
+		Employee employee = null;
 		if(emp!=null) {
-			service.saveEmp(emp);
+			employee = service.saveEmp(emp);
+			location = ServletUriComponentsBuilder.fromCurrentRequest()
+					.path("/id/{id}")
+					.buildAndExpand(employee.getId())
+					.toUri();
 		}
 		else {
-			return "Please fill all field";
+			return ResponseEntity.badRequest().body(null);
 		}
-		return "Record Saved";
+		return ResponseEntity.created(location).body(employee);
 	}
 	
 	@GetMapping("/byname")
-	public List<Employee> getByName(@RequestParam String empName){
-		return service.getByName(empName);
+	public ResponseEntity<List<Employee>> getByName(@RequestParam String empName){
+		return new ResponseEntity<>(service.getByName(empName), HttpStatus.OK);
 	}
 	
 	@GetMapping("/bycity")
-	public List<Employee> getByCity(@RequestParam(name = "c") String city){
-		return service.getByCity(city);
+	public ResponseEntity<List<Employee>> getByCity(@RequestParam(name = "c") String city){
+		return new ResponseEntity<>(service.getByCity(city), HttpStatus.OK);
 	}
 	
 	@GetMapping ("/salary/{empsalary}")
-	public List<Employee> getBySalary(@PathVariable(name = "empsalary") Integer salary){
-		return service.getBySalary(salary);
+	public ResponseEntity<List<Employee>> getBySalary(@PathVariable(name = "empsalary") Integer salary){
+		return new ResponseEntity<>(service.getBySalary(salary),HttpStatus.OK);
+	}
+	
+	@PutMapping("/update/{id}")
+	public ResponseEntity<String> updateEmp(@PathVariable Integer id, @RequestBody Employee emp) {
+		try {
+			service.updateEmpById(id, emp);
+			return ResponseEntity.ok("Record updated");
+		} catch (DataNotFoundException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+		}
+
 	}
 	
 	@DeleteMapping("/{id}")
-	public String deleteEmpByID(@PathVariable Integer id) {
+	public ResponseEntity<Employee> deleteEmpByID(@PathVariable Integer id) {
 		service.deleteEmpById(id);
-		return "Deleted Successfully";
+		return ResponseEntity.noContent().build();
 	}
 	
 	@RequestMapping(value = "/pdfreport", method = RequestMethod.GET, produces = MediaType.APPLICATION_PDF_VALUE)

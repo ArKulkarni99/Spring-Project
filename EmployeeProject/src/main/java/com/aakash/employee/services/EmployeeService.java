@@ -11,10 +11,10 @@ public interface EmployeeService {
 	public List<Employee> getByCity(String city);
 	public List<Employee> getBySalary(Integer salary);
 	
-	public void saveEmp(Employee emp);
+	public Employee saveEmp(Employee emp);
 	public void saveAllEmp(List<Employee> emp);
 	
-	public void updateEmpById(Integer empId,String name);
+	public void updateEmpById(Integer empId,Employee emp);
 	
 	public void deleteEmpById(Integer empId);
 	public void deleteAllEmp();

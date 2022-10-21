@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.aakash.employee.entity.Employee;
+import com.aakash.employee.exception.DataNotFoundException;
 import com.aakash.employee.repo.EmployeeRepository;
 
 @Service
@@ -42,8 +43,8 @@ public class EmployeeServiceImp implements EmployeeService{
 	}
 
 	@Override
-	public void saveEmp(Employee emp) {
-		repository.save(emp);		
+	public Employee saveEmp(Employee emp) {
+		return repository.save(emp);		
 	}
 
 	@Override
@@ -52,10 +53,13 @@ public class EmployeeServiceImp implements EmployeeService{
 	}
 
 	@Override
-	public void updateEmpById(Integer empId, String name) {
-		Employee employee = repository.findById(empId).orElse(null);
-		employee.setName(name);
-		repository.save(employee);	
+	public void updateEmpById(Integer empId, Employee emp) {
+		Employee updateEmployee = repository.findById(empId)
+				.orElseThrow(() -> new DataNotFoundException("Employee not exist with id:" + empId));
+		updateEmployee.setName(emp.getName());
+		updateEmployee.setCity(emp.getCity());
+		updateEmployee.setSalary(emp.getSalary());
+		repository.save(updateEmployee);	
 	}
 
 	@Override
