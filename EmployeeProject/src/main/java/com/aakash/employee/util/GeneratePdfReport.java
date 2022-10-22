@@ -21,7 +21,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import com.lowagie.text.StandardFonts;
 
 public class GeneratePdfReport {
-	private static final Logger logger = LoggerFactory.getLogger(GeneratePdfReport.class);
+	private static final Logger LOG = LoggerFactory.getLogger(GeneratePdfReport.class);
 	
 	public static ByteArrayInputStream empReport(List<Employee> employee) {
 		Document document = new Document();
@@ -88,7 +88,7 @@ public class GeneratePdfReport {
             document.addHeader("Info", "Employee");
             document.close();
 		} catch (Exception e) {
-			logger.error("Error Occured: {0}", e);
+			LOG.error("Error Occured: {0}", e);
 		}
 		return new ByteArrayInputStream(outputStream.toByteArray());
 		

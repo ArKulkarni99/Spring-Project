@@ -8,6 +8,8 @@ import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +35,7 @@ import com.aakash.employee.util.GeneratePdfReport;
 @RestController
 @RequestMapping("/emp")
 public class EmployeeController {
+	private static final Logger LOG = LoggerFactory.getLogger(EmployeeController.class);
 	
 	@Autowired
 	private EmployeeService service;
@@ -40,16 +43,20 @@ public class EmployeeController {
 	
 	@GetMapping("/id/{id}")
 	public ResponseEntity<Employee> getEmpById(@PathVariable Integer id) {
+		LOG.info("getEmpById Called");
 		Employee employee = service.getEmpById(id);
 		if(employee !=null) {
+			LOG.info("Got Employee By Id :"+id);
 			return ResponseEntity.ok(employee);
 		}else {
-			throw new DataNotFoundException("Employee with ID: "+id+" Not Found");
+			LOG.error("No Data Found");
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
 	
 	@GetMapping("/getAll")
 	public ResponseEntity<List<Employee>> getAllEmp(){
+		 LOG.info("getAllEmp Called");
 		 List<Employee> emp = service.getAllEmp();
 		 return ResponseEntity.ok().body(emp);
 	}
@@ -57,6 +64,7 @@ public class EmployeeController {
 	
 	@PostMapping("/save")
 	public ResponseEntity<Employee> saveEmp(@RequestBody Employee emp) {
+		LOG.info("saveEmp Called");
 		URI location = null;
 		Employee employee = null;
 		if(emp!=null) {
@@ -65,34 +73,43 @@ public class EmployeeController {
 					.path("/id/{id}")
 					.buildAndExpand(employee.getId())
 					.toUri();
+			LOG.info("Emp is not null");
 		}
 		else {
+			LOG.error("Emp is null");
 			return ResponseEntity.badRequest().body(null);
 		}
+		LOG.info("Emp is saved");
 		return ResponseEntity.created(location).body(employee);
 	}
 	
 	@GetMapping("/byname")
 	public ResponseEntity<List<Employee>> getByName(@RequestParam String empName){
+		LOG.info("getByName called");
 		return new ResponseEntity<>(service.getByName(empName), HttpStatus.OK);
 	}
 	
 	@GetMapping("/bycity")
 	public ResponseEntity<List<Employee>> getByCity(@RequestParam(name = "c") String city){
+		LOG.info("getByCity called");
 		return new ResponseEntity<>(service.getByCity(city), HttpStatus.OK);
 	}
 	
 	@GetMapping ("/salary/{empsalary}")
 	public ResponseEntity<List<Employee>> getBySalary(@PathVariable(name = "empsalary") Integer salary){
+		LOG.info("getBySalary called");
 		return new ResponseEntity<>(service.getBySalary(salary),HttpStatus.OK);
 	}
 	
 	@PutMapping("/update/{id}")
 	public ResponseEntity<String> updateEmp(@PathVariable Integer id, @RequestBody Employee emp) {
+		LOG.info("updateEmp called");
 		try {
 			service.updateEmpById(id, emp);
+			LOG.info("Employee Updated");
 			return ResponseEntity.ok("Record updated");
 		} catch (DataNotFoundException e) {
+			LOG.error("Data Not Found");
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
 		}
 
@@ -100,12 +117,14 @@ public class EmployeeController {
 	
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Employee> deleteEmpByID(@PathVariable Integer id) {
+		LOG.info("deleteEmpByID called");
 		service.deleteEmpById(id);
 		return ResponseEntity.noContent().build();
 	}
 	
 	@RequestMapping(value = "/pdfreport", method = RequestMethod.GET, produces = MediaType.APPLICATION_PDF_VALUE)
 	public ResponseEntity<InputStreamResource> empReport(){
+		LOG.info("empReport called");
 		List<Employee> empList = service.getAllEmp();
 		
 		ByteArrayInputStream stream = GeneratePdfReport.empReport(empList);
